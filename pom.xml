@@ -6,7 +6,7 @@
 
     <groupId>dev.connor33341</groupId>
     <artifactId>databasemanager</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
 
@@ -14,8 +14,8 @@
     <description>Managing MC related data in SQL</description>
 
     <properties>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.9.24</kotlin.version>
     </properties>

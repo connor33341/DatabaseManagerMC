@@ -20,6 +20,14 @@
         <kotlin.version>1.9.24</kotlin.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub connor33341 Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/connor33341/DatabaseManagerMC</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

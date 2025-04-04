@@ -21,6 +21,13 @@ public class DatabaseManager {
 
     public DatabaseManager(Logger logger, String dbUrl, String dbUsername, String dbPassword) {
         this.logger = logger;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            logger.info("MySQL JDBC Driver registered successfully.");
+        } catch (ClassNotFoundException e) {
+            logger.error("Failed to register MySQL JDBC Driver: " + e.getMessage());
+            throw new RuntimeException("MySQL driver not found in classpath", e);
+        }
         this.dbUrl = dbUrl;
         this.dbUsername = dbUsername;
         this.dbPassword = dbPassword;

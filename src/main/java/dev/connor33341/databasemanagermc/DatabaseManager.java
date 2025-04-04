@@ -57,7 +57,7 @@ public class DatabaseManager {
     private void createTableIfNotExists() {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS player_data (" +
                 "uuid VARCHAR(36) PRIMARY KEY, " +
-                "username VARCHAR(16) NOT NULL, " +
+                "username VARCHAR(16) NOT NULL DEFAULT 'default', " +
                 "userid VARCHAR(36) UNIQUE, " +
                 "`rank` VARCHAR(50) DEFAULT 'default', " +
                 "balance DOUBLE NOT NULL DEFAULT 0.0, " +
@@ -101,13 +101,13 @@ public class DatabaseManager {
         return 0;
     }
 
-    public void setBalance(UUID uuid, double balance) {
-        String upsert = "INSERT INTO player_data (uuid, balance) VALUES (?, ?) " +
-                "ON DUPLICATE KEY UPDATE balance = ?, last_updated = CURRENT_TIMESTAMP";
+    public void setBalance(UUID uuid, double balance, String username) {
+        String upsert = "INSERT INTO player_data (uuid, username, balance) VALUES (?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE balance = VALUES(balance), last_updated = CURRENT_TIMESTAMP";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(upsert)) {
             stmt.setString(1, uuid.toString());
-            stmt.setDouble(2, balance);
+            stmt.setString(2, username);
             stmt.setDouble(3, balance);
             stmt.executeUpdate();
         } catch (SQLException e) {

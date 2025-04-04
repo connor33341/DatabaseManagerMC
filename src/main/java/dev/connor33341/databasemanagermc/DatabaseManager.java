@@ -1,5 +1,7 @@
 package dev.connor33341.databasemanagermc;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 
 public class DatabaseManager {
 
+    private HikariDataSource dataSource;
     private final Logger logger;
     private Connection connection;
     private final String dbUrl;
@@ -21,26 +24,30 @@ public class DatabaseManager {
         this.dbUrl = dbUrl;
         this.dbUsername = dbUsername;
         this.dbPassword = dbPassword;
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUsername);
+        config.setPassword(dbPassword);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setMaximumPoolSize(15); // May need to be increased later lol
+        this.dataSource = new HikariDataSource(config);
+        createTableIfNotExists();
     }
 
     public void connect() throws SQLException {
-        connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-        createTableIfNotExists();
         logger.info("Successfully connected to the database.");
     }
 
     public void disconnect() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                logger.info("Database connection closed.");
-            }
-        } catch (SQLException e) {
-            logger.error("Error closing database connection: " + e.getMessage());
+        if (dataSource != null && !dataSource.isClosed()){
+            dataSource.close();
+            logger.info("Disconnected from DB");
         }
     }
 
-    private void createTableIfNotExists() throws SQLException {
+    private void createTableIfNotExists() {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS player_data (" +
                 "uuid VARCHAR(36) PRIMARY KEY, " +
                 "username VARCHAR(16) NOT NULL, " +
@@ -49,14 +56,18 @@ public class DatabaseManager {
                 "balance DOUBLE NOT NULL DEFAULT 0.0, " +
                 "other_data TEXT, " +
                 "last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)";
-        try (PreparedStatement stmt = connection.prepareStatement(createTableSQL)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(createTableSQL)) {
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Error creating table: " + e.getMessage());
         }
     }
 
     public double getBalance(UUID uuid) {
         String query = "SELECT balance FROM player_data WHERE uuid = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, uuid.toString());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -65,12 +76,13 @@ public class DatabaseManager {
         } catch (SQLException e) {
             logger.error("Error fetching balance for " + uuid + ": " + e.getMessage());
         }
-        return -1; // No record found
+        return -1;
     }
 
     public long getLastUpdated(UUID uuid) {
         String query = "SELECT UNIX_TIMESTAMP(last_updated) FROM player_data WHERE uuid = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, uuid.toString());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -85,7 +97,8 @@ public class DatabaseManager {
     public void setBalance(UUID uuid, double balance) {
         String upsert = "INSERT INTO player_data (uuid, balance) VALUES (?, ?) " +
                 "ON DUPLICATE KEY UPDATE balance = ?, last_updated = CURRENT_TIMESTAMP";
-        try (PreparedStatement stmt = connection.prepareStatement(upsert)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(upsert)) {
             stmt.setString(1, uuid.toString());
             stmt.setDouble(2, balance);
             stmt.setDouble(3, balance);
@@ -100,7 +113,8 @@ public class DatabaseManager {
                 "VALUES (?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "username = ?, userid = ?, rank = ?, balance = ?, other_data = ?, last_updated = CURRENT_TIMESTAMP";
-        try (PreparedStatement stmt = connection.prepareStatement(upsert)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(upsert)) {
             stmt.setString(1, uuid.toString());
             stmt.setString(2, username);
             stmt.setString(3, userid);
@@ -120,7 +134,8 @@ public class DatabaseManager {
 
     public PlayerData getPlayerData(UUID uuid) {
         String query = "SELECT username, userid, rank, balance, other_data FROM player_data WHERE uuid = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, uuid.toString());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {

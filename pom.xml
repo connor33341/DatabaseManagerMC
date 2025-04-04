@@ -6,7 +6,7 @@
 
     <groupId>dev.connor33341</groupId>
     <artifactId>databasemanager</artifactId>
-    <version>1.0.1</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
 
@@ -64,6 +64,11 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
         </dependency>
     </dependencies>
 

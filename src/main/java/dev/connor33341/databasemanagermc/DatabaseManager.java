@@ -59,7 +59,7 @@ public class DatabaseManager {
                 "uuid VARCHAR(36) PRIMARY KEY, " +
                 "username VARCHAR(16) NOT NULL, " +
                 "userid VARCHAR(36) UNIQUE, " +
-                "rank VARCHAR(50) DEFAULT 'default', " +
+                "`rank` VARCHAR(50) DEFAULT 'default', " +
                 "balance DOUBLE NOT NULL DEFAULT 0.0, " +
                 "other_data TEXT, " +
                 "last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)";
@@ -116,10 +116,10 @@ public class DatabaseManager {
     }
 
     public void updatePlayerData(UUID uuid, String username, String userid, String rank, double balance, String otherData) {
-        String upsert = "INSERT INTO player_data (uuid, username, userid, rank, balance, other_data) " +
+        String upsert = "INSERT INTO player_data (uuid, username, userid, `rank`, balance, other_data) " +
                 "VALUES (?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
-                "username = ?, userid = ?, rank = ?, balance = ?, other_data = ?, last_updated = CURRENT_TIMESTAMP";
+                "username = ?, userid = ?, `rank` = ?, balance = ?, other_data = ?, last_updated = CURRENT_TIMESTAMP";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(upsert)) {
             stmt.setString(1, uuid.toString());
@@ -140,7 +140,7 @@ public class DatabaseManager {
     }
 
     public PlayerData getPlayerData(UUID uuid) {
-        String query = "SELECT username, userid, rank, balance, other_data FROM player_data WHERE uuid = ?";
+        String query = "SELECT username, userid, `rank`, balance, other_data FROM player_data WHERE uuid = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, uuid.toString());
